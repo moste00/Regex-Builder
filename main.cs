@@ -5,6 +5,8 @@ using System.Text.RegularExpressions ;
 using static RegexBuilders.LiteralString ;
 using static RegexBuilders.WhiteSpace ;
 using static RegexBuilders.Numerals ;
+
+
 class Program {
   //TODO
   //1- Add negative numbers in range limits for Numerals
@@ -24,9 +26,9 @@ class Program {
   //That is, x{,} is equivalent to x*
   public static void Main(string[] args) {
     var seperatorP = literally("-")
-                 .or(literally("/"))
-                 .or(literally("\\"))
-                 .or(Whitespace.manyTimesRepeated());
+                    .or("/")
+                    .or("\\")
+                    .or(Whitespace.manyTimesRepeated);
     
     var dateP =  
               numerals.between(1900,2010)
@@ -39,9 +41,12 @@ class Program {
                numerals.between(1,31)
              );
 
-    var xyP = dateP.then(dateP).or(dateP).then(dateP).manyTimesRepeated().then(dateP);    
+    var xyP = dateP.then(dateP).or(dateP).then(dateP).manyTimesRepeated.then(dateP);    
     
-    
+    Console.WriteLine(dateP.toRegexString()) ;
+    Console.WriteLine("--------------------------------------------------------");
+    Console.WriteLine() ;
+    Console.WriteLine() ;
     Console.WriteLine(xyP.toRegexString());
   }
 }

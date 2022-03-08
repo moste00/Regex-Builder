@@ -12,7 +12,9 @@ namespace RegexBuilders {
         //0 --> term is optionl 
         //-1 --> term could be repeated any number of times, possibly 0
         //-2 --> term could be repeated any number of times, at least 1
+        //-3 --> term is min-max quantified by the pair mmQuantifier
         public int quantifier {get; set;} = quantifier ;
+        public (int,int) mmQuantifier {get; set;} = (0,0) ;
         public TermType t {get; init;} = t ;
         public RegexBuilder p {get; init;} = p ;
       }
@@ -25,16 +27,33 @@ namespace RegexBuilders {
 
       private void quantifyLastTerm(int q, int? min = null, int? max = null){
         terms[terms.Count - 1].quantifier = q ;
+        if(q == -3){
+          var mmQ = terms[terms.Count - 1].mmQuantifier ;
+          if(min != null) mmQ = (min.Value ,mmQ.Item2) ;
+          if(max != null) mmQ = (mmQ.Item1 ,max.Value) ;
+          terms[terms.Count - 1].mmQuantifier = mmQ ;
+         }
       }
 
-      public RegexBuilder anyTimesRepeated() {
-        quantifyLastTerm(-1);
-        return this ;
+      public RegexBuilder optionally {
+        get {
+            quantifyLastTerm(0);
+            return this ;
+        }
       }
 
-      public RegexBuilder manyTimesRepeated() {
-        quantifyLastTerm(-2);
-        return this ;
+      public RegexBuilder anyTimesRepeated {
+        get {
+            quantifyLastTerm(-1);
+            return this ;
+        }
+      }
+
+      public RegexBuilder manyTimesRepeated {
+        get {
+            quantifyLastTerm(-2);
+            return this ;
+        }
       }
 
       public RegexBuilder nTimesRepeated(int numtimes) {
@@ -47,10 +66,7 @@ namespace RegexBuilders {
         return this ;
       }
 
-      public RegexBuilder optionally() {
-        quantifyLastTerm(0);
-        return this ;
-      }
+    
 
       public RegexBuilder then(RegexBuilder follower) {
         if(follower == this) terms.Add(new Term(1,TermType.Self,this));
@@ -89,14 +105,10 @@ namespace RegexBuilders {
             case TermType.Self:
               regexString.Append(selfReferenceDelimiter);
               
-              if(term.p == null) { 
-                regexString.Append("|(?:");
-                regexString.Append(selfReferencePlaceHolder);
-              }
-              else {
-                regexString.Append("(?:");
-                regexString.Append(selfReferencePlaceHolder);
-              }
+              if(term.p == null) regexString.Append("|");
+
+              regexString.Append("(?:");
+              regexString.Append(selfReferencePlaceHolder);
               
               break ;
               
@@ -127,6 +139,7 @@ namespace RegexBuilders {
         regexString.Replace(selfReferenceDelimiter,"");
         return regexString.ToString() ;
       }
+      public static implicit operator RegexBuilder(string str) => LiteralString.literally(str) ;
 
       private static string numToRegexQuantifier(int q) => (q >  1)? "{"+ q +"}":
                                                           (q == 0)? "?"        :
