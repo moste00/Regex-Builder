@@ -25,13 +25,10 @@ namespace RegexBuilders {
         terms.Add(new Term(1,TermType.Self,this)) ;
       }
 
-      private void quantifyLastTerm(int q, int? min = null, int? max = null){
+      private void quantifyLastTerm(int q, (int,int)? mmQ = null){
         terms[terms.Count - 1].quantifier = q ;
-        if(q == -3){
-          var mmQ = terms[terms.Count - 1].mmQuantifier ;
-          if(min != null) mmQ = (min.Value ,mmQ.Item2) ;
-          if(max != null) mmQ = (mmQ.Item1 ,max.Value) ;
-          terms[terms.Count - 1].mmQuantifier = mmQ ;
+        if(q == -3 && mmQ.HasValue){
+          terms[terms.Count - 1].mmQuantifier = mmQ.Value ;
          }
       }
 
