@@ -23,7 +23,7 @@ namespace RegexBuilders {
         terms.Add(new Term(1,TermType.Self,this)) ;
       }
 
-      private void quantifyLastTerm(int q){
+      private void quantifyLastTerm(int q, int? min = null, int? max = null){
         terms[terms.Count - 1].quantifier = q ;
       }
 
