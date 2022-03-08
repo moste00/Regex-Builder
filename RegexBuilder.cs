@@ -63,15 +63,15 @@ namespace RegexBuilders {
             ArgumentOutOfRangeException("Method RegexBuilder.nTimesRepeated should be called with an argument > 1, passed argument was "+ numtimes) ;
         }
 
-        quantifyLastTerm(numtimes);
+        quantifyLastTerm((int)numtimes);
         return this ;
       }
 
       public RegexBuilder repeatedLessThanOrEqual(uint maxtimes) {
         if(maxtimes == 0) throw new 
-        ArgumentOutOfRangeException("No pattern can be repeated less than or equal 0 times");
+          ArgumentOutOfRangeException("No pattern can be repeated less than or equal 0 times");
         if(maxtimes == 1) throw new 
-        ArgumentOutOfRangeException("Use method RegexBuilder.optionally (implementing the ? quantifier) to express a pattern occuring 0 or 1 times ");
+          ArgumentOutOfRangeException("Use method RegexBuilder.optionally (implementing the ? regex quantifier) to express a pattern occuring 0 or 1 times ");
 
         quantifyLastTerm(-3,(0,maxtimes)) ;
         return this ;
@@ -91,7 +91,7 @@ namespace RegexBuilders {
       } 
       public RegexBuilder repeatedBetween(uint mintimes,uint maxtimes) {
         if(maxtimes == mintimes) throw new 
-          ArgumentException("min-max repetition requires distinct bounds, use RegexBuilder.nTimesRepeated to express repetition a constant number of times");
+          ArgumentException("min-max repetition requires distinct bounds, use method RegexBuilder.nTimesRepeated to express repetition a constant number of times");
 
         if(maxtimes > mintimes) quantifyLastTerm(-3,(mintimes,maxtimes)) ;
         else                    quantifyLastTerm(-3,(maxtimes,mintimes)) ;
@@ -121,7 +121,7 @@ namespace RegexBuilders {
         regexString.Append("(?:");
         regexString.Append(selfToRegexString()) ;
         regexString.Append(")");
-        regexString.Append(numToRegexQuantifier(terms[0].quantifier));
+        regexString.Append(numToRegexQuantifier(terms[0].quantifier,terms[0].mmQuantifier));
 
         string selfReferencePlaceHolder = Guid.NewGuid().ToString() +"__SELF__HERE__"+ Guid.NewGuid().ToString();
 
@@ -155,7 +155,7 @@ namespace RegexBuilders {
           }
           
           regexString.Append(")");
-          regexString.Append(numToRegexQuantifier(term.quantifier));
+          regexString.Append(numToRegexQuantifier(term.quantifier,term.mmQuantifier));
           
           if(term.t == TermType.Self) regexString.Append(selfReferenceDelimiter);
         }
@@ -171,10 +171,15 @@ namespace RegexBuilders {
       }
       public static implicit operator RegexBuilder(string str) => LiteralString.literally(str) ;
 
-      private static string numToRegexQuantifier(int q) => (q >  1)? "{"+ q +"}":
-                                                          (q == 0)? "?"        :
-                                                          (q ==-1)? "*"        :
-                                                          (q ==-2)? "+"        : "" ;
+      private static string numToRegexQuantifier(int q,(uint,uint) mmQ) => 
+                                                           (q >  1)? "{"+ q +"}":
+                                                           (q == 0)? "?"        :
+                                                           (q ==-1)? "*"        :
+                                                           (q ==-2)? "+"        :
+                                                           (q ==-3)? minmaxQuantifierToString(mmQ):"" ;
+      private static string minmaxQuantifierToString((uint,uint) mmQ) => (mmQ.Item1 == 0)? "{,"+ mmQ.Item2 +"}" :
+                                                                         (mmQ.Item2 == 0)? "{"+  mmQ.Item1 +",}":
+                                                                         "{"+ mmQ.Item1 +","+ mmQ.Item2 +"}"    ;
   }
 
   //singleton for whitespace specifically, just to enhance readability
