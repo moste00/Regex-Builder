@@ -13,8 +13,14 @@ namespace RegexBuilders {
     public static Numerals numerals { get { return new Numerals() ; } }
     
     public Numerals between(uint low, uint high) {
-      lowerlimit = low ;
-      upperlimit = high ;
+      if(low < high) {
+        lowerlimit = low ;
+        upperlimit = high ;
+      }
+      else {
+        upperlimit = low ;
+        lowerlimit = high ;
+      }
       return this ;
     }
 
