@@ -14,7 +14,11 @@ namespace RegexBuilders {
         //-2 --> term could be repeated any number of times, at least 1
         //-3 --> term is min-max quantified by the pair mmQuantifier
         public int quantifier {get; set;} = quantifier ;
-        public (int,int) mmQuantifier {get; set;} = (0,0) ;
+        //(n > 0,0) ---> Term must occur at least n times, but could occur arbitarily many times
+        //(0,n > 0) ---> Term must occur at most  n times, but could be omitted
+        //(n > 0, m > 0) ---> Terms must occur at least n times, and at most m times
+        //(0,0) ---> Not a valid min-max quantification
+        public (uint,uint) mmQuantifier {get; set;} = (0,0) ;
         public TermType t {get; init;} = t ;
         public RegexBuilder p {get; init;} = p ;
       }
@@ -25,7 +29,7 @@ namespace RegexBuilders {
         terms.Add(new Term(1,TermType.Self,this)) ;
       }
 
-      private void quantifyLastTerm(int q, (int,int)? mmQ = null){
+      private void quantifyLastTerm(int q, (uint,uint)? mmQ = null){
         terms[terms.Count - 1].quantifier = q ;
         if(q == -3 && mmQ.HasValue){
           terms[terms.Count - 1].mmQuantifier = mmQ.Value ;
@@ -53,7 +57,7 @@ namespace RegexBuilders {
         }
       }
 
-      public RegexBuilder nTimesRepeated(int numtimes) {
+      public RegexBuilder nTimesRepeated(uint numtimes) {
         if(numtimes <= 1) {
           throw new 
             ArgumentOutOfRangeException("Method RegexBuilder.nTimesRepeated should be called with an argument > 1, passed argument was "+ numtimes) ;
@@ -63,7 +67,36 @@ namespace RegexBuilders {
         return this ;
       }
 
-    
+      public RegexBuilder repeatedLessThanOrEqual(uint maxtimes) {
+        if(maxtimes == 0) throw new 
+        ArgumentOutOfRangeException("No pattern can be repeated less than or equal 0 times");
+        if(maxtimes == 1) throw new 
+        ArgumentOutOfRangeException("Use method RegexBuilder.optionally (implementing the ? quantifier) to express a pattern occuring 0 or 1 times ");
+
+        quantifyLastTerm(-3,(0,maxtimes)) ;
+        return this ;
+      }
+      public RegexBuilder repeatedMoreThanOrEqual(uint mintimes) {
+        quantifyLastTerm(-3,(mintimes,0));
+        return this ;
+      } 
+      public RegexBuilder repeatedLessThan(uint maxtimes) {
+        if(maxtimes == 0) throw new 
+          ArgumentOutOfRangeException("No pattern can repeat less than 0 times") ;
+        return repeatedLessThanOrEqual(maxtimes - 1);
+      } 
+      public RegexBuilder repeatedMoreThan(uint mintimes) {
+        if(mintimes != uint.MaxValue) return repeatedMoreThanOrEqual(mintimes + 1);
+        throw new ArgumentOutOfRangeException("No pattern can repeat more than uint.MaxValue");
+      } 
+      public RegexBuilder repeatedBetween(uint mintimes,uint maxtimes) {
+        if(maxtimes == mintimes) throw new 
+          ArgumentException("min-max repetition requires distinct bounds, use RegexBuilder.nTimesRepeated to express repetition a constant number of times");
+
+        if(maxtimes > mintimes) quantifyLastTerm(-3,(mintimes,maxtimes)) ;
+        else                    quantifyLastTerm(-3,(maxtimes,mintimes)) ;
+        return this ;
+      }    
 
       public RegexBuilder then(RegexBuilder follower) {
         if(follower == this) terms.Add(new Term(1,TermType.Self,this));
