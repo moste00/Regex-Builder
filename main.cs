@@ -41,13 +41,13 @@ class Program {
                numerals.between(1,31)
              );
 
-    var xyP = dateP.then(dateP).or(dateP).then(dateP).manyTimesRepeated.then(dateP);    
+    var xyP = dateP.then(dateP).or(dateP).then(dateP).manyTimesRepeated.then(dateP).toRegexString();    
     
-    Console.WriteLine(dateP.toRegexString()) ;
+    Console.WriteLine(xyP.cleanRegexString()) ;
     Console.WriteLine("--------------------------------------------------------");
     Console.WriteLine() ;
     Console.WriteLine() ;
-    Console.WriteLine(xyP.toRegexString());
+    Console.WriteLine(xyP);
   }
 }
 //(?:(?:(?:(?:xyz|w(?:omega)))))

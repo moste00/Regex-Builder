@@ -195,15 +195,64 @@ namespace RegexBuilders {
   //extensions methods
   public static class Utils {
     
-    //TODO
-    //As a start, implement the simplification rule
+    //As a start, implements the simplification rule
     //            (?:(?:(?:...(?:"""ARBITARY_REGEX_HERE"")...))) 
     //                             <---Simplifies To--->
     //                        (?:"""ARBITARY_REGEX_HERE"")
-    //This is EXTREMLY hard to get right.
+    //(This is EXTREMLY hard to get right.)
+    //Also implements the substitution (?0[0-9]|[1-8][0-9]|9[0-9]) <---> [0-9]{2}
+    private static readonly Lazy<Regex> redundantOpeningParen 
+      = new Lazy<Regex>(() => new Regex(@"(\(\?:){2,}",RegexOptions.Compiled)) ; 
     public static string cleanRegexString(this string reStr) {
-      StringBuilder cleanStr = new StringBuilder(reStr.Length) ;
+      var cleanStr = new StringBuilder(reStr.Length) ;
+      var searchRe = redundantOpeningParen.Value ;
+      var redundantParens = searchRe.Matches(reStr);
 
+      int lastInsertedPos = 0;
+      foreach(Match m in redundantParens){
+        if(m.Index > lastInsertedPos){
+          cleanStr.Append(reStr.Substring(lastInsertedPos,m.Index - lastInsertedPos));
+        }
+        int start = m.Index + m.Length ;
+        int curr  = start ;
+        int outerOpeningParen = m.Length/3 ;
+        int internalOpeningParen = 0 ;
+
+        while(!(internalOpeningParen == 0 && reStr[curr] == ')')){
+          switch(reStr[curr]){
+              case '(':
+                if(reStr[curr+1] == '?' && reStr[curr+2] == ':'){
+                   curr = curr + 2 ;
+                   internalOpeningParen++ ;
+                }
+              break ;
+              case ')':
+                internalOpeningParen-- ;
+              break ;
+              default : break ;
+          }
+          curr++ ;
+        }
+
+        int numClosingParen = 0 ;
+        while(curr < reStr.Length && reStr[curr] == ')'){
+          numClosingParen++ ;
+          curr++;
+        }
+
+        if(numClosingParen == outerOpeningParen){
+          cleanStr.Append("(?:");
+          cleanStr.Append(reStr.Substring(start,curr - numClosingParen - start));
+          cleanStr.Append(")");
+          lastInsertedPos = curr ;
+        }
+        else lastInsertedPos = m.Index ;
+      }
+      if(lastInsertedPos < reStr.Length){
+        cleanStr.Append(reStr.Substring(lastInsertedPos,reStr.Length - lastInsertedPos));
+      }
+
+      cleanStr.Replace("(?:0[0-9]|[1-8][0-9]|9[0-9])","[0-9]{2}");
       return cleanStr.ToString() ;
     }
   }
